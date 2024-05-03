@@ -51,6 +51,6 @@ class Plants extends StatelessWidget{
   }
       //Utility method to navigate to PlantPage
   void _toPlantPage(BuildContext context, PlantDB plantDB, int plantIndex) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const PlantPage()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => PlantPage(plantDB: plantDB, plantIndex: plantIndex,)));
   } //_toPlantPage
 }
