@@ -90,7 +90,7 @@ class _MealPageState extends State<PlantPage> {
             FormTextTile(
               labelText: 'Plant name',
               controller: _choController,
-              icon: MdiIcons.pasta,
+              icon: MdiIcons.sprout,
             ),
             FormSeparator(label: 'Plant time'),
             FormDateTile(

@@ -30,8 +30,8 @@ class Plants extends StatelessWidget{
                       return Card(
                         elevation: 5,
                         child: ListTile(
-                          leading: Icon(Icons.abc),
-                          trailing: Icon(Icons.ac_unit),
+                          leading: Icon(Icons.image), // inserire preview dell'immagine inserita per quella pianta
+                          trailing: Icon(MdiIcons.sprout),
                           title:
                               Text('Plant name : ${plantDB.plants[plantIndex].plant_name}'),
                           subtitle: Text('${Formats.fullDateFormatNoSeconds.format(plantDB.plants[plantIndex].dateTime)}'),
