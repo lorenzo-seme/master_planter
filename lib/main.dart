@@ -1,9 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:master_planter/database/db_operations.dart';
 import 'package:master_planter/models/plantDB.dart';
 import 'package:master_planter/screens/splash.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+import 'package:flutter/widgets.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  final db = openDatabase(
+    join(await getDatabasesPath(), 'plants_db.db'),
+    onCreate: (db, version) {
+      // Run the CREATE TABLE statement on the database.
+      return db.execute(
+        'CREATE TABLE plants(id TEXT PRIMARY KEY, date TEXT, img TEXT)',
+      );
+  },
+  // Set the version. This executes the onCreate function and provides a
+  // path to perform database upgrades and downgrades.
+  version: 1,
+    );
+  
   runApp(const MyApp());
 }
 
@@ -13,8 +32,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<PlantDB>(
-      create: (context) => PlantDB(),
+    return FutureProvider<PlantDB>(
+      initialData: PlantDB(),
+      create: (context) => getPlantsFromDb(),
       child:
         MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -32,3 +52,8 @@ class MyApp extends StatelessWidget {
         ),);
   }
 }
+
+/*
+Idea: potrei implementare la lettura dal database nello splash, in modo da accedere all'app solo una volta completata questa lettura. In questo modo non devo usare initialData
+e quindi potrei usare direttamente un ChangeNotifierProvider
+*/

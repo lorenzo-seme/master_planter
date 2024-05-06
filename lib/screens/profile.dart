@@ -84,7 +84,7 @@ class Profile extends StatelessWidget {
             const SizedBox(
               height: 20,
             ),
-            Align(
+            /* Align(
               alignment: Alignment.center,
               child: ElevatedButton(
                 onPressed: () async {
@@ -100,7 +100,7 @@ class Profile extends StatelessWidget {
                         const Color(0xFF384242))),
                 child: const Text('Log Out'),
               ),
-            ),
+            ), */
           ],
         ),
       ),

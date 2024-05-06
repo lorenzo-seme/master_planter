@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:master_planter/models/plantDB.dart';
 import 'package:master_planter/screens/plantpage.dart';
 import 'package:master_planter/utils/formats.dart';
@@ -11,6 +13,7 @@ class Plants extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text('Master Planter'),),
       body: Center(
         //Here we are using a Consumer because we want the UI showing 
         //the list of plants to rebuild every time the plant DB updates.
@@ -30,12 +33,14 @@ class Plants extends StatelessWidget{
                       return Card(
                         elevation: 5,
                         child: ListTile(
-                          leading: Icon(Icons.image), // inserire preview dell'immagine inserita per quella pianta
-                          trailing: Icon(MdiIcons.sprout),
+                          leading: Icon(MdiIcons.sprout),
+                          trailing: Container(child: (plantDB.plants[plantIndex].plant_image_path!='') ? Image.file(File((plantDB.plants[plantIndex].plant_image_path)!)) : Icon(MdiIcons.image),),
+                          //leading: Container(child: (plantDB.plants[plantIndex].plant_image_path!='') ? Image.file(File((plantDB.plants[plantIndex].plant_image_path)!)) : Icon(MdiIcons.image),),
+                          //trailing: Icon(MdiIcons.sprout),
                           title:
                               Text('Plant name : ${plantDB.plants[plantIndex].plant_name}'),
-                          subtitle: Text('${Formats.fullDateFormatNoSeconds.format(plantDB.plants[plantIndex].dateTime)}'),
-                          //When a ListTile is tapped, the user is redirected to the MealPage, where it will be able to edit it.
+                          subtitle: Text('${Formats.onlyDayDateFormat.format(plantDB.plants[plantIndex].dateTime)}'),
+                          //When a ListTile is tapped, the user is redirected to the PlantPage, where it will be able to edit it.
                           onTap: () => _toPlantPage(context, plantDB, plantIndex),
                         ),
                       );
