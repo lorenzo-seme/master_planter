@@ -12,11 +12,12 @@ class PlantDB extends ChangeNotifier{
   //The PlantDB can be represented here as list of plants.
   List<Plant> plants = [];
 
-/*   Future<void> getFromDB() async{
+  PlantDB() {_init();}
+
+  Future<void> _init() async {
     plants = await getPlantsFromDb();
     notifyListeners();
-  } */
-
+  }
   //Method to use to add a plant.
   void addPlant(Plant toAdd){
     plants.add(toAdd);

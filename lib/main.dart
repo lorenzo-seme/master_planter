@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:master_planter/database/db_operations.dart';
-import 'package:master_planter/models/plantDB.dart';
+import 'package:master_planter/models/plant.dart';
+//import 'package:master_planter/models/plantDB.dart';
 import 'package:master_planter/screens/splash.dart';
 import 'package:provider/provider.dart';
 
@@ -10,7 +11,7 @@ import 'package:sqflite/sqflite.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-  final db = openDatabase(
+  openDatabase(
     join(await getDatabasesPath(), 'plants_db.db'),
     onCreate: (db, version) {
       // Run the CREATE TABLE statement on the database.
@@ -32,8 +33,8 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return FutureProvider<PlantDB>(
-      initialData: PlantDB(),
+    return FutureProvider<List<Plant>>(
+      initialData: [],
       create: (context) => getPlantsFromDb(),
       child:
         MaterialApp(
