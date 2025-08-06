@@ -12,13 +12,5 @@ Master Planter is your smart companion for taking care of your plants with ease 
 
 Take better care of your plants and join a growing community of plant enthusiasts with Master Planter!
 
-## ⚠️ License and Use
-
-This project is published for educational and portfolio purposes only.
-
-**You may not copy, reuse, modify, distribute, or publish any part of this code** without explicit written permission from the author.
-
 If you're interested in collaborating or using part of this project, please contact me directly. 
 Connect with me on [LinkedIn](https://www.linkedin.com/in/lorenzo-semenzato-203181248/)
-
-© 2025 Lorenzo Semenzato. All rights reserved.
