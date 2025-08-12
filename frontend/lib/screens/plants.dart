@@ -79,7 +79,7 @@ class _PlantsState extends State<Plants> {
 
               return RefreshIndicator(
                 displacement: 80,
-                onRefresh: () async {await onRefresh(context);},
+                onRefresh: () async {await onRefresh();},
                 child: filteredPlants.isEmpty
                     ? ListView( // Necessario per permettere il pull-to-refresh anche senza elementi
                         children: const [

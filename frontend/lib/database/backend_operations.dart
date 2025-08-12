@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:master_planter/utils/utils_functions.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -62,37 +61,7 @@ Future<void> insertPlantIntoDB(Plant plant) async {
     conflictAlgorithm: ConflictAlgorithm.replace,
   );
   
-  try {
-    final response = await http.put(
-      Uri.parse('$url/${plant.plant_id}'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(await plant.toMapBackend()),
-    );
-
-    if (response.statusCode == 204) {
-      print("Plant upserted to backend!");
-      await db.update('plants', {'sync_status': 'synced'},
-      where: 'plant_id = ?',
-      whereArgs: [plant.plant_id],
-      );
-      print(await db.query(
-      'plants',
-      columns: ['sync_status'],
-      where: 'plant_id = ?',
-      whereArgs: [plant.plant_id],
-      ));
-    } else {
-      print("Errore inserimento: ${response.statusCode} - ${response.body}");
-      await db.update('plants', {'sync_status': 'error'},
-        where: 'plant_id = ?',
-        whereArgs: [plant.plant_id],
-      );
-    }
-  } catch (e) {
-    print("Errore di connessione: $e");
-  }
+  onRefresh();
 
 
 }
@@ -102,18 +71,16 @@ Future<void> deletePlantFromDB(String plant_id) async {
   final db = await openDatabase(join(await getDatabasesPath(), 'plants_db.db'));
 
   // Remove the Plant from the database.
-  await db.delete(
+  await db.update(
     'plants',
+    {'sync_status': 'delete_pending'}, // Mark as deleted
     // Use a `where` clause to delete a specific plant.
     where: 'plant_id = ?',
     // Pass the Plant's id as a whereArg to prevent SQL injection.
     whereArgs: [plant_id],
   );
 
-  final response = await http.delete(Uri.parse('$url/$plant_id'));
-  if (response.statusCode == 204) { // 204 No Content è risposta comune per delete riuscito
-    print('Plant deleted from server.');
-  }
+  onRefresh();
 
 }
 
@@ -134,7 +101,7 @@ Future<void> changeUsername(String oldUsername, String newUsername) async {
   }
 }
 
-Future<void> onRefresh(context) async {
+Future<void> onRefresh() async {
   final db = await openDatabase(join(await getDatabasesPath(), 'plants_db.db'));
 
   final unsyncedPlants = await db.query(
@@ -147,49 +114,62 @@ Future<void> onRefresh(context) async {
   int count = 0;
 
   if (tot_unsynced == 0) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('All plants are synced with the server.'),
-    ));
+    // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    //   content: Text('All plants are synced with the server.'),
+    // ));
     return;
   } 
 
   for (final plant in unsyncedPlants) {
-    try {
-      final response = await http.put(
-        Uri.parse('$url/${plant['plant_id']}'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'PlantId': plant['plant_id'],
-          'Username': await getUsernameFromPrefs(),
-          'PlantName': plant['plant_name'],
-          'DateOfAdoption': plant['date_of_adoption'],
-          'PlantLocation': plant['plant_location'],
-        }),
-      );
+    String status = plant['sync_status'] as String;
 
-      if (response.statusCode == 204 || response.statusCode == 201) {
-        print('${plant['plant_name']} synced with server.');
-        count += 1;
-        await db.update(
-          'plants',
-          {'sync_status': 'synced'},
-          where: 'plant_id = ?',
-          whereArgs: [plant['plant_id']],
+    try {
+      final response;
+      if (status == 'delete_pending'){
+        response = await http.delete(Uri.parse('$url/${plant['plant_id']}'));
+      }
+      else {//if (status == 'pending'){
+        response = await http.put(
+          Uri.parse('$url/${plant['plant_id']}'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'PlantId': plant['plant_id'],
+            'Username': await getUsernameFromPrefs(),
+            'PlantName': plant['plant_name'],
+            'DateOfAdoption': plant['date_of_adoption'],
+            'PlantLocation': plant['plant_location'],
+          }),
         );
+      }
+      if (response.statusCode == 204) {
+        print('${plant['plant_name']} synced with server. [${status=='pending' ? 'PUT' : 'DELETE'}]');
+        count += 1;
+        status == 'delete_pending'
+          ? 
+            await db.delete(
+              'plants',
+              where: 'plant_id = ?',
+              whereArgs: [plant['plant_id']],
+            )
+          :
+            await db.update(
+              'plants',
+              {'sync_status': 'synced'},
+              where: 'plant_id = ?',
+              whereArgs: [plant['plant_id']],
+            );
+
       } else {
-        print('Unable to send ${plant['plant_name']} to server.');
+        print('Unable to sync ${plant['plant_name']} with server. [${status=='pending' ? 'PUT' : 'DELETE'}]');
         // lascio sync_status invariato (rimane 'error')
       }
     } catch (e) {
       // errore di connessione → lascio sync_status invariato
       print('Connection error for ${plant['plant_name']}: $e');
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Check your connection and try again.'),
-      ));
     }
   }
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: Text('Synced $count out of $tot_unsynced pending plants.'),
-  ));
+  // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  //   content: Text('Synced $count out of $tot_unsynced pending plants.'),
+  // ));
   print('Synced $count out of $tot_unsynced pending plants.');
 }
