@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:master_planter/database/backend_operations.dart';
 import 'package:master_planter/models/plant.dart';
+import 'package:master_planter/services/local_db_service.dart';
 //import 'dart:io';
 
 // e se implementassi qui l'inserimento e l'eliminazione da database?
@@ -15,7 +15,7 @@ class PlantDB extends ChangeNotifier{
   PlantDB() {_init();}
 
   Future<void> _init() async {
-    plants = await getPlantsFromDb();
+    plants = await LocalDbService().getPlants();
     notifyListeners();
   }
   //Method to use to add a plant.

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:master_planter/database/backend_operations.dart';
+import 'package:master_planter/services/backend_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PersonalInfoPage extends StatefulWidget {
@@ -38,7 +38,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
     FocusScope.of(context).unfocus();
     setState(() {});
     if (previous_username != _nameController.text.trim()) {
-      await changeUsername(previous_username, _nameController.text.trim());
+      await BackendService().changeUsername(previous_username, _nameController.text.trim());
       print('Username changed from $previous_username to ${_nameController.text.trim()}');
     }
   }

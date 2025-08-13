@@ -1,8 +1,9 @@
 import 'dart:io';
 
-import 'package:master_planter/database/backend_operations.dart';
+import 'package:master_planter/services/backend_service.dart';
 import 'package:master_planter/models/plantDB.dart';
 import 'package:master_planter/screens/plantpage.dart';
+import 'package:master_planter/services/local_db_service.dart';
 import 'package:master_planter/utils/formats.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
@@ -79,7 +80,7 @@ class _PlantsState extends State<Plants> {
 
               return RefreshIndicator(
                 displacement: 80,
-                onRefresh: () async {await onRefresh();},
+                onRefresh: () async {await BackendService().sync();},
                 child: filteredPlants.isEmpty
                     ? ListView( // Necessario per permettere il pull-to-refresh anche senza elementi
                         children: const [
@@ -100,10 +101,11 @@ class _PlantsState extends State<Plants> {
                               padding: const EdgeInsets.symmetric(horizontal: 20),
                               child: const Icon(Icons.delete, color: Colors.white),
                             ),
-                            onDismissed: (direction) {
+                            onDismissed: (direction) async {
                               // Cancella la pianta dal database
-                              deletePlantFromDB(plant.plant_id);
-                              plantDB.deletePlant(index); 
+                              await LocalDbService().markPlantAsDeletePending(plant.plant_id);
+                              await BackendService().sync();
+                              plantDB.deletePlant(index);
 
                               // Mostra un messaggio
                               ScaffoldMessenger.of(context).showSnackBar(

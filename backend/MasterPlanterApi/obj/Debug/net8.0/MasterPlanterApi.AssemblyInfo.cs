@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MasterPlanterApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9bf1607cad616c343aac691544558ad24e704fb9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+05ccb204d18caa3eacd5aeb7b62a0438251b981c")]
 [assembly: System.Reflection.AssemblyProductAttribute("MasterPlanterApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MasterPlanterApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:master_planter/database/backend_operations.dart';
+import 'package:master_planter/services/backend_service.dart';
 import 'package:master_planter/models/plantDB.dart';
+import 'package:master_planter/services/local_db_service.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:master_planter/models/plant.dart';
 import 'package:master_planter/widgets/formTiles.dart';
@@ -212,7 +213,8 @@ class _PlantPageState extends State<PlantPage> {
     if(formKey.currentState!.validate()){
       Plant newPlant = Plant(plant_id: plant_id, plant_name: _choController.text, date_of_adoption: _selectedDate, plant_image_path: _image_path);
       widget.plantIndex == -1 ? widget.plantDB.addPlant(newPlant) : widget.plantDB.editPlant(widget.plantIndex, newPlant);
-      await insertPlantIntoDB(newPlant);
+      await LocalDbService().insertPlant(newPlant);
+      await BackendService().sync();
       print(newPlant);
       Navigator.pop(context);
     }
@@ -220,7 +222,8 @@ class _PlantPageState extends State<PlantPage> {
 
   //Utility method that deletes a plant entry.
   Future<void> _deleteAndPop(BuildContext context) async{
-    await deletePlantFromDB(widget.plantDB.plants[widget.plantIndex].plant_id);
+    await LocalDbService().markPlantAsDeletePending(widget.plantDB.plants[widget.plantIndex].plant_id);
+    await BackendService().sync();
     widget.plantDB.deletePlant(widget.plantIndex); 
     Navigator.pop(context);
   }//_deleteAndPop
