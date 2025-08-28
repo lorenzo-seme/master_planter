@@ -1,6 +1,5 @@
 import 'package:master_planter/services/local_db_service.dart';
 import 'package:master_planter/utils/utils_functions.dart';
-import 'package:path/path.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -39,6 +38,7 @@ class BackendService{
     int count = 0;
 
     if (tot_unsynced == 0) {
+      print('All plants are synced with the server.');
       // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       //   content: Text('All plants are synced with the server.'),
       // ));

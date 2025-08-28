@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:master_planter/screens/personal_info.dart';
+import 'package:master_planter/screens/settings.dart';
 import 'package:master_planter/utils/app_info.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class Profile extends StatelessWidget {
   const Profile({super.key});
@@ -47,25 +46,25 @@ class Profile extends StatelessWidget {
                 child: Column(
                   children: [
                     ListTile(
-                      leading: Icon(MdiIcons.accountCircleOutline),
-                      title: const Text("Personal Info"),
+                      leading: Icon(Icons.settings),
+                      title: const Text("Preferences"),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => PersonalInfoPage()
+                            builder: (context) => SettingsPage()
                           ),
                         );
                       },
                     ),
-                    const Divider(height: 0),
-                    ListTile(
-                      leading: Icon(MdiIcons.notebook),
-                      title: const Text("My Page"),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {},
-                    ),
+                    // const Divider(height: 0),
+                    // ListTile(
+                    //   leading: Icon(MdiIcons.notebook),
+                    //   title: const Text("My Page"),
+                    //   trailing: const Icon(Icons.chevron_right),
+                    //   onTap: () {},
+                    // ),
                   ],
                 ),
               ),

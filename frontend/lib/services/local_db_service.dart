@@ -102,4 +102,20 @@ class LocalDbService{
         whereArgs: ['synced'],
       );
   }
+
+  Future<String> getSyncStatus(String plant_id) async {
+    final List<Map<String, dynamic>> maps = await _db!.query(
+      'plants',
+      columns: ['sync_status'],
+      where: 'plant_id = ?',
+      whereArgs: [plant_id],
+    );
+
+    if (maps.isNotEmpty) {
+      return maps.first['sync_status'] as String;
+    } else {
+      throw Exception('Plant with id $plant_id not found');
+    }
+  } 
+
 }

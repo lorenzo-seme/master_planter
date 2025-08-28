@@ -39,6 +39,16 @@ class _PlantPageState extends State<PlantPage> {
   TextEditingController _choController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String _image_path = '';
+
+  // PLANT DATA CARD
+  bool isEditing = false; // controlla se i campi sono editabili
+  TextEditingController adoptionController = TextEditingController(text: '01/01/2024');
+  TextEditingController locationController = TextEditingController(text: '');
+  // NOTES CARD
+  TextEditingController notesController = TextEditingController(text: '');
+  bool isEditingNotes = false; // controlla se il campo note è editabile
+
+  List<Widget> photos = [];
   
   //Here, we are using initState() to initialize the form fields values.
   //Rationale: Plant content and time are not known is the plant is new (plantIndex == -1). 
@@ -55,6 +65,9 @@ class _PlantPageState extends State<PlantPage> {
   @override
   void dispose() {
     _choController.dispose();
+    adoptionController.dispose();
+    locationController.dispose();
+    notesController.dispose();
     super.dispose();
   } // dispose
 
@@ -68,13 +81,38 @@ class _PlantPageState extends State<PlantPage> {
     //A FAB is showed to provide the "delete" functinality. It is showed only if the plant already exists.
     return Scaffold(
       appBar: AppBar(
-        title: _choController.text == "" ? Text("New Plant") : Text(_choController.text),
+        title: TextFormField(
+          controller: _choController,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            hintText: 'Plant name',
+            hintStyle: TextStyle(
+              color: Colors.white60, // colore dell’hint
+            ),
+            border: InputBorder.none,
+          ),
+          style: const TextStyle(
+            color: Colors.white, // per il testo nell'AppBar
+            fontSize: 20,
+          ),
+        ),
+        //_choController.text == "" ? Text("New Plant") : Text(_choController.text),
         actions: [
           IconButton(onPressed: () => _validateAndSave(context), icon: Icon(Icons.done))
         ],
       ),
-      body: Center(
-        child: _buildForm(context),
+      body: Form(
+        key: formKey,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          children: [
+            _buildPhotoSection(context),
+            _buildPlantData(context),
+            _buildCareRecords(context),
+            _buildPlantStatus(context),
+            _buildNotes(context),
+          ],
+        ),
       ),
       floatingActionButton: widget.plantIndex == -1 ? null : FloatingActionButton(onPressed: () => _deleteAndPop(context), child: Icon(Icons.delete),),
     );
@@ -85,61 +123,6 @@ class _PlantPageState extends State<PlantPage> {
   //1. How to actually implement a Form;
   //2. Define custom-made FormTiles (take a look at the widgets/formSeparator.dart and widgets/formTiles.dart files);
   //3. How to implement a Date+Time picker (take a look at the _selectDate utility method).
-  Widget _buildForm(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 10, bottom: 8, left: 20, right: 20),
-        child: ListView(
-          children: <Widget>[
-            FormSeparator(label: 'Plant name'),
-            FormTextTile(
-              //labelText: 'Plant name',
-              controller: _choController,
-              icon: MdiIcons.sprout,
-            ),
-            FormSeparator(label: 'Adoption day'),
-            FormDateTile(
-              labelText: 'Adoption day ',
-              date: _selectedDate,
-              icon: MdiIcons.clockTimeFourOutline,
-              onPressed: () {
-                _selectDate(context);
-              },
-              dateFormat: Formats.onlyDayDateFormat,
-            ),
-            FormSeparator(label: 'Photo'),
-            Align(
-              alignment: Alignment.center,
-              child: ElevatedButton(
-                onPressed: () async {
-                  _showPicker(context);
-                },
-                style: ButtonStyle(
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                        const EdgeInsets.symmetric(
-                            horizontal: 60, vertical: 12)),
-                    foregroundColor:
-                        MaterialStateProperty.all<Color>(Colors.white),
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                        const Color(0xFF384242))),
-                child: const Text('Tap to add a photo'),
-              ),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: Container(
-                alignment: Alignment.center,
-                width: 400,
-                height: 400,
-                child: (_image_path!='') ? Image.file(File(_image_path)) : Text('No photo added'),
-              )
-            ),
-          ],
-        ),
-      ),
-    );
-  } // _buildForm
 
   void _showPicker(BuildContext context) {
     showModalBottomSheet(
@@ -214,7 +197,8 @@ class _PlantPageState extends State<PlantPage> {
       Plant newPlant = Plant(plant_id: plant_id, plant_name: _choController.text, date_of_adoption: _selectedDate, plant_image_path: _image_path);
       widget.plantIndex == -1 ? widget.plantDB.addPlant(newPlant) : widget.plantDB.editPlant(widget.plantIndex, newPlant);
       await LocalDbService().insertPlant(newPlant);
-      await BackendService().sync();
+      BackendService().sync();
+      setState(() {});
       print(newPlant);
       Navigator.pop(context);
     }
@@ -223,9 +207,300 @@ class _PlantPageState extends State<PlantPage> {
   //Utility method that deletes a plant entry.
   Future<void> _deleteAndPop(BuildContext context) async{
     await LocalDbService().markPlantAsDeletePending(widget.plantDB.plants[widget.plantIndex].plant_id);
-    await BackendService().sync();
+    BackendService().sync();
     widget.plantDB.deletePlant(widget.plantIndex); 
     Navigator.pop(context);
   }//_deleteAndPop
 
-} //PlantPage
+  Widget _addPhotoButton(BuildContext context){
+    return SizedBox(
+      height: 15,
+      child: ElevatedButton(
+        onPressed: () async {
+          _showPicker(context);
+        },
+        style: ButtonStyle(
+            padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                const EdgeInsets.symmetric(
+                    horizontal: 60, vertical: 12)),
+            foregroundColor:
+                MaterialStateProperty.all<Color>(Colors.white),
+            backgroundColor: MaterialStateProperty.all<Color>(
+                const Color(0xFF384242))),
+        child: const Text('Tap to add a photo'),
+      ),
+    );
+  }
+
+  Widget _buildPhotoSection(BuildContext context){
+    return SizedBox(
+      height:280,
+      child:
+      PageView(
+        children: _image_path=='' ? [_addPhotoButton(context)] : photos + [Image.file(File(_image_path))] + [_addPhotoButton(context)],
+        ),
+    );
+                
+    //             photos.map((path) {
+    //       return Image.asset(
+    //         path,
+    //         fit: BoxFit.cover,
+    //       );
+    //     }).toList(),
+    // ),
+    
+  }
+
+  Widget _buildPlantData(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+          ),
+      elevation: 4,
+      margin: EdgeInsets.all(8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Intestazione con titolo e penna
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Plant Data',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: Icon(isEditing ? Icons.check : Icons.edit),
+                  onPressed: () {
+                    setState(() {
+                      isEditing = !isEditing; // cambia modalità
+                    });
+                  },
+                )
+              ],
+            ),
+            SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Adoption Date:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                InkWell(
+                  onTap: isEditing ? () => _selectDate(context) : null,
+                  child: Row(
+                    children: [
+                      Text(
+                        Formats.onlyDayDateFormat.format(_selectedDate),
+                        style: TextStyle(
+                          color: isEditing ? Colors.blue : Colors.black,
+                          decoration: isEditing
+                              ? TextDecoration.underline
+                              : TextDecoration.none,
+                        ),
+                      ),
+                      if (isEditing)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4.0),
+                          child: Icon(Icons.calendar_today, size: 16, color: Colors.blue),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            
+            SizedBox(height: 8),
+            
+            // Campo Location
+            Text('Location:', style: TextStyle(fontWeight: FontWeight.bold)),
+            isEditing
+                ? TextFormField(
+                  controller: locationController,
+                  validator:(value){return null;})
+                : Text(locationController.text),
+          ],
+        ),
+      ),
+    );
+    // return Form(
+    //   key: formKey,
+    //   child: Padding(
+    //     padding: const EdgeInsets.only(top: 10, bottom: 8, left: 20, right: 20),
+    //     child: Expanded(
+    //       child: ListView(
+    //         shrinkWrap: true,
+    //         children: <Widget>[
+    //           FormSeparator(label: 'Plant name'),
+    //           FormTextTile(
+    //             //labelText: 'Plant name',
+    //             controller: _choController,
+    //             icon: MdiIcons.sprout,
+    //           ),
+    //           FormSeparator(label: 'Adoption day'),
+    //           FormDateTile(
+    //             labelText: 'Adoption day ',
+    //             date: _selectedDate,
+    //             icon: MdiIcons.clockTimeFourOutline,
+    //             onPressed: () {
+    //               _selectDate(context);
+    //             },
+    //             dateFormat: Formats.onlyDayDateFormat,
+    //           ),
+    //           FormSeparator(label: 'Photo'),
+    //           Align(
+    //             alignment: Alignment.center,
+    //             child: ElevatedButton(
+    //               onPressed: () async {
+    //                 _showPicker(context);
+    //               },
+    //               style: ButtonStyle(
+    //                   padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+    //                       const EdgeInsets.symmetric(
+    //                           horizontal: 60, vertical: 12)),
+    //                   foregroundColor:
+    //                       MaterialStateProperty.all<Color>(Colors.white),
+    //                   backgroundColor: MaterialStateProperty.all<Color>(
+    //                       const Color(0xFF384242))),
+    //               child: const Text('Tap to add a photo'),
+    //             ),
+    //           ),
+    //           Align(
+    //             alignment: Alignment.center,
+    //             child: Container(
+    //               alignment: Alignment.center,
+    //               width: 400,
+    //               height: 400,
+    //               child: (_image_path!='') ? Image.file(File(_image_path)) : Text('No photo added'),
+    //             )
+    //           ),
+    //         ],
+    //       ),
+    //     ),
+    //   ),
+    // );
+  } // _buildForm
+
+  Widget _buildCareRecords(BuildContext context) {
+    return Card(
+              shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                  ),
+      elevation: 4,
+      margin: EdgeInsets.all(8),
+      child: const Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Care Records',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.start,
+            ),
+            SizedBox(height: 12),
+            Text('Last watering: not available', style: TextStyle(fontSize: 16)),
+            SizedBox(height: 12),
+            Text('Last fertilization: not available', style: TextStyle(fontSize: 16)),
+            SizedBox(height: 12),
+            Text('Last repot: not available', style: TextStyle(fontSize: 16)),
+          ]
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlantStatus(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+          ),
+      elevation: 4,
+      margin: EdgeInsets.all(8),
+      child: const Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Plant Status',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.start,
+            ),
+            SizedBox(height: 12),
+            Text('Watering', style: TextStyle(fontSize: 16)),
+            SizedBox(height: 12),
+            Text('Fertilization', style: TextStyle(fontSize: 16)),
+            SizedBox(height: 12),
+            Text('Repot', style: TextStyle(fontSize: 16)),
+          ]
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotes(BuildContext context) {
+    return Card(
+              shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                  ),
+      elevation: 4,
+      margin: EdgeInsets.all(8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Notes',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: Icon(isEditingNotes ? Icons.check : Icons.edit),
+                  onPressed: () {
+                    setState(() {
+                      isEditingNotes = !isEditingNotes;
+                    });
+                  },
+                )
+              ],
+            ),
+            SizedBox(height: 8),
+
+            // Campo Note
+            Text(
+              'Your notes:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 4),
+            isEditingNotes
+                ? TextFormField(
+                    controller: notesController,
+                    validator:(value){return null;},
+                    maxLines: null,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your notes here...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  )
+                : Text(
+                    notesController.text.isEmpty
+                        ? 'No notes yet'
+                        : notesController.text,
+                    style: TextStyle(fontSize: 16),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+}

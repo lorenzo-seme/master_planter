@@ -4,7 +4,6 @@ import 'package:master_planter/services/backend_service.dart';
 import 'package:master_planter/models/plantDB.dart';
 import 'package:master_planter/screens/plantpage.dart';
 import 'package:master_planter/services/local_db_service.dart';
-import 'package:master_planter/utils/formats.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
@@ -80,7 +79,10 @@ class _PlantsState extends State<Plants> {
 
               return RefreshIndicator(
                 displacement: 80,
-                onRefresh: () async {await BackendService().sync();},
+                onRefresh: () async {
+                  await BackendService().sync();
+                  setState(() {});
+                },
                 child: filteredPlants.isEmpty
                     ? ListView( // Necessario per permettere il pull-to-refresh anche senza elementi
                         children: const [
@@ -93,7 +95,7 @@ class _PlantsState extends State<Plants> {
                         itemBuilder: (context, index) {
                           final plant = filteredPlants[index];
                           return Dismissible(
-                            key: Key(plant.plant_name.toString()), // TODO: CAMBIA QUI, USA ID NON PLANT NAME
+                            key: Key(plant.plant_id), // TODO: CAMBIA QUI, USA ID NON PLANT NAME
                             direction: DismissDirection.endToStart, // Swipe da destra a sinistra
                             background: Container(
                               color: Colors.red,
@@ -163,13 +165,43 @@ class _PlantsState extends State<Plants> {
                                               ),
                                             ),
                                             const SizedBox(height: 4),
-                                            Text(
-                                              'Last update: ${Formats.onlyDayDateFormat.format(plant.date_of_adoption)}',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[600],
-                                              ),
+                                            FutureBuilder<String>(
+                                              future: LocalDbService().getSyncStatus(plant.plant_id),
+                                              builder: (context, snapshot) {
+                                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                                  return Text(
+                                                    'Loading...',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.grey[600],
+                                                    ),
+                                                  );
+                                                } else if (snapshot.hasError) {
+                                                  return Text(
+                                                    'Error',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.red,
+                                                    ),
+                                                  );
+                                                } else {
+                                                  return Text(
+                                                    snapshot.data ?? '',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.grey[600],
+                                                    ),
+                                                  );
+                                                }
+                                              },
                                             ),
+                                            // Text(
+                                            //   'Last update: ${Formats.onlyDayDateFormat.format(plant.date_of_adoption)}',
+                                            //   style: TextStyle(
+                                            //     fontSize: 14,
+                                            //     color: Colors.grey[600],
+                                            //   ),
+                                            // ),
                                           ],
                                         ),
                                       ),
